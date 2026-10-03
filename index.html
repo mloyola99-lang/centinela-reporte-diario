@@ -292,7 +292,7 @@
     <header class="hero">
       <div>
         <h1>Un radar sobre las cinco zonas operativas</h1>
-        <p class="lead">Centinela valida el reporte diario de cada coordinador zonal y consolida el día en un semáforo por zona, con incidencias priorizadas, responsables y plazos. Pégale un reporte y pruébalo.</p>
+        <p class="lead">Centinela consulta por sí mismo la base de incidencias de las cinco macro zonas, prioriza lo crítico y consolida el día en un semáforo por zona, citando cada incidencia por su ID para que sea verificable. Pregúntale y pruébalo.</p>
         <button class="btn" type="button" id="abrirChat">Abrir chat con Centinela</button>
         <a class="btn ghost" href="#probar">Ver cómo probarlo</a>
       </div>
@@ -369,7 +369,7 @@
     <section>
       <div class="wrap">
         <h2>Dos formas de trabajar</h2>
-        <p class="intro">Centinela distingue quién le escribe. Si no queda claro, pregunta si el reporte es para validar una zona o para consolidar el día.</p>
+        <p class="intro">Centinela trabaja con una base de incidencias conectada como herramienta, y también puede revisar un reporte que le pegues en el chat. Si no queda claro qué necesitas, pregunta si es para validar una zona o para consolidar el día.</p>
         <div class="modos">
           <div class="modo">
             <h3>Validar una zona</h3>
@@ -379,7 +379,7 @@
           <div class="modo">
             <h3>Consolidar el día</h3>
             <p class="quien">Para el Director de Operaciones</p>
-            <p>Reúne los reportes de las cinco zonas con corte a las 6:30 p. m. y entrega la atención inmediata, un resumen ejecutivo, la tabla semáforo, los pendientes abiertos y las decisiones que se le solicitan al director.</p>
+            <p>Consulta la base de incidencias de las cinco zonas con corte a las 6:30 p. m. y entrega la atención inmediata, un resumen ejecutivo, la tabla semáforo, los pendientes abiertos y las decisiones que se le solicitan al director.</p>
           </div>
         </div>
       </div>
@@ -388,13 +388,13 @@
     <section>
       <div class="wrap">
         <h2>Comandos rápidos</h2>
-        <p class="intro">Escríbelos en el chat después de haber enviado uno o más reportes.</p>
+        <p class="intro">Escríbelos directamente en el chat. Centinela consultará la base antes de responder.</p>
         <div class="tabla-scroll">
           <table class="cmds">
             <thead><tr><th>Comando</th><th>Qué hace</th></tr></thead>
             <tbody>
               <tr><td><code>/validar [zona]</code></td><td>Valida el reporte de una zona y devuelve observaciones al coordinador.</td></tr>
-              <tr><td><code>/consolidar</code></td><td>Arma el consolidado del día con los reportes recibidos en la conversación.</td></tr>
+              <tr><td><code>/consolidar</code></td><td>Arma el consolidado de una fecha con la base de incidencias, por ejemplo /consolidar del 2026-10-02.</td></tr>
               <tr><td><code>/alertas</code></td><td>Muestra solo las incidencias de atención inmediata.</td></tr>
               <tr><td><code>/pendientes</code></td><td>Lista los pendientes abiertos por zona, con responsable y plazo.</td></tr>
               <tr><td><code>/faltantes</code></td><td>Indica qué zonas y qué campos faltan para cerrar el día.</td></tr>
@@ -407,30 +407,44 @@
     <section id="probar">
       <div class="wrap">
         <h2>Cómo probarlo</h2>
-        <ol class="pasos">
-          <li>Copia el reporte de ejemplo de abajo.</li>
-          <li>Abre el chat con el botón de la esquina inferior derecha.</li>
-          <li>Pega el reporte y escribe <strong>/validar Operaciones Mineras</strong>.</li>
-          <li>Revisa el estado de validación, las inconsistencias y el semáforo preliminar que propone.</li>
-        </ol>
+        <p class="intro">Centinela está conectado a una base ficticia de 100 incidencias registradas entre el 15 de septiembre y el 2 de octubre de 2026, con su fecha, hora, macro zona, zona o administración, cliente, tipo, prioridad, responsable y estado. Abre el chat con el botón de la esquina inferior derecha y prueba estas consultas.</p>
+
+        <div class="tabla-scroll">
+          <table class="cmds">
+            <thead><tr><th>Escribe en el chat</th><th>Qué deberías ver</th></tr></thead>
+            <tbody>
+              <tr><td><code>/alertas</code></td><td>Las incidencias de prioridad Alta que siguen pendientes o en proceso, las tres de mayor impacto en detalle y el resto listado por ID.</td></tr>
+              <tr><td><code>/pendientes</code></td><td>Los pendientes abiertos agrupados por macro zona, con responsable y plazo por definir.</td></tr>
+              <tr><td><code>/consolidar del 2026-10-02</code></td><td>El consolidado del día: atención inmediata, resumen ejecutivo y tabla semáforo de las cinco zonas.</td></tr>
+              <tr><td><code>¿Qué incidencias SSOMA hubo en Regional Sur?</code></td><td>Una consulta libre: Centinela filtra la base y responde citando los ID.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="intro" style="margin-top:28px">Cada respuesta cita el ID de la incidencia (por ejemplo, INC-085), de modo que cualquier dato se puede contrastar con la base. Si algo no figura en ella, Centinela lo indica en lugar de completarlo.</p>
+
+        <h3 style="font-family:var(--display);font-weight:600;font-size:1.35rem;margin:40px 0 8px">También puede validar un reporte pegado</h3>
+        <p class="intro">Para simular el trabajo de un coordinador zonal, copia este reporte, pégalo en el chat y escribe <strong>/validar Operaciones Mineras</strong>. Tiene una inconsistencia a propósito para que Centinela la detecte.</p>
 
         <div class="muestra">
           <pre id="reporteEjemplo">Reporte diario (datos ficticios para prueba)
-Zona: Operaciones Mineras
-Fecha: 02/10/2026
+Macro zona: Operaciones Mineras
+Administración: Administrador de contrato 3
+Cliente: Minera Altiplano C
+Fecha: 2026-10-02
 Puestos programados: 48
 Puestos cubiertos: 45
 Ausencias: 2
-Incidencias: corte de energía en garita principal de 14:10 a 15:30; un puesto descubierto en turno noche por ausencia sin reemplazo.
-Acciones: se coordinó grupo electrógeno con el cliente.
-Responsable: supervisor de zona
+Incidencia: corte de energía en garita principal de 14:10 a 15:30; un puesto descubierto en turno noche por ausencia sin reemplazo.
+Acción: se coordinó grupo electrógeno con el cliente.
+Responsable: Jefe de Operaciones Mineras
 Plazo: dato no reportado</pre>
           <button class="btn" type="button" id="copiar">Copiar reporte de ejemplo</button>
           <span class="copiado" id="copiadoMsg" role="status" aria-live="polite"></span>
         </div>
 
         <div class="aviso">
-          Este es un prototipo académico y no un canal oficial de la empresa. Usa solo datos ficticios: no ingreses nombres, DNI, teléfonos ni información real de clientes o sedes. Las respuestas son un apoyo a la decisión y requieren validación humana.
+          Este es un prototipo académico y no un canal oficial de la empresa. La base de incidencias y los clientes son ficticios. No ingreses nombres, DNI, teléfonos ni información real de clientes o sedes. Las respuestas son un apoyo a la decisión y requieren validación humana.
         </div>
       </div>
     </section>
@@ -455,7 +469,7 @@ Plazo: dato no reportado</pre>
       defaultLanguage: 'en',
       initialMessages: [
         'Hola, soy Centinela, analista de operaciones.',
-        'Pégame el reporte diario de una zona para validarlo, o varios reportes para consolidar el día.'
+        'Puedo consultar la base de incidencias de las cinco zonas. Prueba con /alertas, /pendientes o /consolidar del 2026-10-02.'
       ],
       i18n: {
         en: {
