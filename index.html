@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Centinela, agente de reporte diario de operaciones</title>
+  <meta name="description" content="Prototipo académico de un agente de IA que valida y consolida reportes diarios de operaciones por zona." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Estilos del chat de n8n -->
+  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --navy: #13233f;
+      --navy-2: #1d3358;
+      --gold: #c9a227;
+      --paper: #f5f7fa;
+      --ink: #1a2233;
+      --muted: #5b6577;
+      --line: #d9dee7;
+      --verde: #2e8b57;
+      --ambar: #d99a1e;
+      --rojo: #c0392b;
+      --gris: #8a94a6;
+
+      --display: "Barlow Semi Condensed", "Arial Narrow", Arial, sans-serif;
+      --body: "Barlow", Arial, Helvetica, sans-serif;
+
+      /* Personalización del chat de n8n */
+      --chat--color-primary: #13233f;
+      --chat--color-primary-shade-50: #1d3358;
+      --chat--color-primary-shade-100: #0c1830;
+      --chat--color-secondary: #c9a227;
+      --chat--color-secondary-shade-50: #b38f1f;
+      --chat--header--background: #13233f;
+      --chat--header--color: #ffffff;
+      --chat--toggle--background: #13233f;
+      --chat--toggle--hover--background: #1d3358;
+      --chat--toggle--active--background: #0c1830;
+      --chat--message--user--background: #13233f;
+      --chat--message--user--color: #ffffff;
+      --chat--message--bot--background: #ffffff;
+      --chat--message--bot--color: #1a2233;
+      --chat--window--width: 420px;
+      --chat--window--height: 620px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+    body {
+      margin: 0;
+      font-family: var(--body);
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    a { color: var(--navy); }
+    :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    /* Cabecera */
+    .hero {
+      background: var(--navy);
+      color: #fff;
+      padding: 64px 0 0;
+    }
+    .hero h1 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: clamp(2.6rem, 6vw, 4.4rem);
+      line-height: 1.02;
+      letter-spacing: -0.01em;
+      margin: 0 0 18px;
+      max-width: 14ch;
+    }
+    .hero p.lead {
+      font-size: 1.15rem;
+      max-width: 58ch;
+      color: #d6dceb;
+      margin: 0 0 28px;
+    }
+    .btn {
+      display: inline-block;
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 12px 22px;
+      border-radius: 4px;
+      border: 2px solid var(--gold);
+      background: var(--gold);
+      color: var(--navy);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover { background: #d8b23a; }
+    .btn.ghost { background: transparent; color: #fff; margin-left: 10px; }
+    .btn.ghost:hover { background: rgba(255,255,255,0.08); }
+
+    /* El semáforo: el elemento memorable */
+    .board {
+      margin-top: 52px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+    .zone {
+      padding: 22px 18px 26px;
+      border-right: 1px solid rgba(255,255,255,0.15);
+    }
+    .zone:last-child { border-right: none; }
+    .lamp {
+      width: 18px; height: 18px; border-radius: 50%;
+      margin-bottom: 14px;
+    }
+    .lamp.verde { background: var(--verde); box-shadow: 0 0 0 5px rgba(46,139,87,0.25); }
+    .lamp.ambar { background: var(--ambar); box-shadow: 0 0 0 5px rgba(217,154,30,0.25); }
+    .lamp.rojo  { background: var(--rojo);  box-shadow: 0 0 0 5px rgba(192,57,43,0.3); }
+    .lamp.sin   { background: transparent; border: 2px dashed var(--gris); }
+    .zone strong {
+      display: block;
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 1.15rem;
+      line-height: 1.2;
+    }
+    .zone span { font-size: 0.92rem; color: #b9c2d6; }
+    .board-note {
+      font-size: 0.85rem;
+      color: #9aa5bd;
+      padding: 10px 0 18px;
+    }
+
+    /* Secciones */
+    section { padding: 64px 0; }
+    section + section { border-top: 1px solid var(--line); }
+    h2 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+      line-height: 1.1;
+      margin: 0 0 12px;
+      color: var(--navy);
+    }
+    .intro { max-width: 64ch; color: var(--muted); margin: 0 0 32px; }
+
+    .modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+    .mode {
+      border-left: 4px solid var(--gold);
+      padding-left: 20px;
+    }
+    .mode h3 {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 1.4rem;
+      margin: 0 0 6px;
+      color: var(--navy);
+    }
+    .mode p { margin: 0 0 10px; max-width: 48ch; }
+    .mode .who { color: var(--muted); font-size: 0.95rem; }
+
+    table.cmds {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+    .cmds th, .cmds td {
+      text-align: left;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    .cmds th {
+      font-family: var(--display);
+      font-weight: 600;
+      background: #eef1f6;
+      color: var(--navy);
+    }
+    .cmds code {
+      font-family: var(--body);
+      font-weight: 600;
+      color: var(--navy);
+      background: #f3ecd4;
+      padding: 2px 8px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+    .table-scroll { overflow-x: auto; }
+
+    ol.steps { padding-left: 1.3em; max-width: 64ch; margin: 0 0 28px; }
+    ol.steps li { margin-bottom: 10px; }
+
+    .sample {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 20px 22px;
+      max-width: 720px;
+    }
+    .sample pre {
+      font-family: var(--body);
+      font-size: 0.95rem;
+      white-space: pre-wrap;
+      margin: 0 0 16px;
+    }
+    .sample .btn { font-size: 1rem; padding: 9px 18px; }
+    .copied { margin-left: 12px; color: var(--verde); font-weight: 600; }
+
+    .notice {
+      background: #fff8e1;
+      border-left: 4px solid var(--ambar);
+      padding: 16px 20px;
+      max-width: 720px;
+      margin-top: 28px;
+      font-size: 0.97rem;
+    }
+
+    footer {
+      background: var(--navy);
+      color: #c8d0e0;
+      padding: 32px 0;
+      font-size: 0.92rem;
+    }
+    footer p { margin: 0 0 6px; }
+
+    @media (max-width: 820px) {
+      .board { grid-template-columns: repeat(2, 1fr); }
+      .zone { border-bottom: 1px solid rgba(255,255,255,0.15); }
+      .zone:nth-child(2n) { border-right: none; }
+      .modes { grid-template-columns: 1fr; gap: 28px; }
+      .btn.ghost { margin: 12px 0 0; }
+    }
+    @media (max-width: 480px) {
+      .board { grid-template-columns: 1fr; }
+      .zone { border-right: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="wrap">
+      <h1>Centinela revisa los reportes de cada zona antes de que lleguen al director</h1>
+      <p class="lead">Es un agente de IA que valida el reporte diario de los coordinadores zonales y consolida el día en un semáforo por zona, con incidencias priorizadas, responsables y plazos. Pégale un reporte y pruébalo.</p>
+      <button class="btn" type="button" id="abrirChat">Abrir chat con Centinela</button>
+      <a class="btn ghost" href="#probar">Ver cómo probarlo</a>
+
+      <div class="board" aria-label="Ejemplo del semáforo por zona">
+        <div class="zone"><div class="lamp verde"></div><strong>Regional Sur</strong><span>Operación normal</span></div>
+        <div class="zone"><div class="lamp ambar"></div><strong>Regional Norte</strong><span>Requiere atención</span></div>
+        <div class="zone"><div class="lamp verde"></div><strong>Regional Centro</strong><span>Operación normal</span></div>
+        <div class="zone"><div class="lamp rojo"></div><strong>Operaciones Mineras</strong><span>Atención inmediata</span></div>
+        <div class="zone"><div class="lamp sin"></div><strong>Resguardos</strong><span>Sin reporte al corte</span></div>
+      </div>
+      <p class="board-note">Vista ilustrativa con estados de ejemplo, no corresponde a datos reales.</p>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="wrap">
+        <h2>Dos formas de trabajar</h2>
+        <p class="intro">Centinela distingue quién le escribe. Si no queda claro, pregunta si el reporte es para validar una zona o para consolidar el día.</p>
+        <div class="modes">
+          <div class="mode">
+            <h3>Validar una zona</h3>
+            <p class="who">Para el coordinador zonal</p>
+            <p>Revisa que el reporte esté completo y que las cifras cuadren. Devuelve un estado (apto, apto con observaciones o no apto), los campos faltantes, las inconsistencias encontradas y hasta cinco preguntas para cerrar el reporte.</p>
+          </div>
+          <div class="mode">
+            <h3>Consolidar el día</h3>
+            <p class="who">Para el Director de Operaciones</p>
+            <p>Reúne los reportes de las cinco zonas con corte a las 6:30 p. m. y entrega la atención inmediata, un resumen ejecutivo, la tabla semáforo, los pendientes abiertos y las decisiones que se le solicitan al director.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>Comandos rápidos</h2>
+        <p class="intro">Escríbelos en el chat después de haber enviado uno o más reportes.</p>
+        <div class="table-scroll">
+          <table class="cmds">
+            <thead><tr><th>Comando</th><th>Qué hace</th></tr></thead>
+            <tbody>
+              <tr><td><code>/validar [zona]</code></td><td>Valida el reporte de una zona y devuelve observaciones al coordinador.</td></tr>
+              <tr><td><code>/consolidar</code></td><td>Arma el consolidado del día con los reportes recibidos en la conversación.</td></tr>
+              <tr><td><code>/alertas</code></td><td>Muestra solo las incidencias de atención inmediata.</td></tr>
+              <tr><td><code>/pendientes</code></td><td>Lista los pendientes abiertos por zona, con responsable y plazo.</td></tr>
+              <tr><td><code>/faltantes</code></td><td>Indica qué zonas y qué campos faltan para cerrar el día.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="probar">
+      <div class="wrap">
+        <h2>Cómo probarlo</h2>
+        <ol class="steps">
+          <li>Copia el reporte de ejemplo de abajo.</li>
+          <li>Abre el chat con el botón de la esquina inferior derecha.</li>
+          <li>Pega el reporte y escribe <strong>/validar Operaciones Mineras</strong>.</li>
+          <li>Revisa el estado de validación, las inconsistencias y el semáforo preliminar que propone.</li>
+        </ol>
+
+        <div class="sample">
+          <pre id="reporteEjemplo">Reporte diario (datos ficticios para prueba)
+Zona: Operaciones Mineras
+Fecha: 02/10/2026
+Puestos programados: 48
+Puestos cubiertos: 45
+Ausencias: 2
+Incidencias: corte de energía en garita principal de 14:10 a 15:30; un puesto descubierto en turno noche por ausencia sin reemplazo.
+Acciones: se coordinó grupo electrógeno con el cliente.
+Responsable: supervisor de zona
+Plazo: dato no reportado</pre>
+          <button class="btn" type="button" id="copiar">Copiar reporte de ejemplo</button>
+          <span class="copied" id="copiadoMsg" role="status" aria-live="polite"></span>
+        </div>
+
+        <div class="notice">
+          Este es un prototipo académico y no un canal oficial de la empresa. Usa solo datos ficticios: no ingreses nombres, DNI, teléfonos ni información real de clientes o sedes. Las respuestas son un apoyo a la decisión y requieren validación humana.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p>Proyecto del curso Agentes Inteligentes para la Gestión, Maestría en Inteligencia Artificial, Universidad Nacional Mayor de San Marcos, 2026.</p>
+      <p>Autor: Miguel Ángel Loyola Atuncar. Agente construido en n8n.</p>
+    </div>
+  </footer>
+
+  <!-- Chat de n8n -->
+  <script type="module">
+    import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+    createChat({
+      webhookUrl: 'https://mloyola99.app.n8n.cloud/webhook/068b6466-15b7-4d8f-b68e-a0aa67dc99fd/chat',
+      mode: 'window',
+      showWelcomeScreen: false,
+      loadPreviousSession: true,
+      defaultLanguage: 'en',
+      initialMessages: [
+        'Hola, soy Centinela, analista de operaciones.',
+        'Pégame el reporte diario de una zona para validarlo, o varios reportes para consolidar el día.'
+      ],
+      i18n: {
+        en: {
+          title: 'Centinela',
+          subtitle: 'Reporte diario de operaciones por zona',
+          footer: '',
+          getStarted: 'Nueva conversación',
+          inputPlaceholder: 'Escribe o pega un reporte...'
+        }
+      }
+    });
+
+    // El botón principal abre la ventana del chat
+    document.getElementById('abrirChat').addEventListener('click', () => {
+      const toggle = document.querySelector('.chat-window-toggle');
+      if (toggle) toggle.click();
+    });
+  </script>
+
+  <!-- Copiar reporte de ejemplo -->
+  <script>
+    document.getElementById('copiar').addEventListener('click', async () => {
+      const texto = document.getElementById('reporteEjemplo').innerText;
+      const msg = document.getElementById('copiadoMsg');
+      try {
+        await navigator.clipboard.writeText(texto);
+        msg.textContent = 'Copiado';
+      } catch (e) {
+        msg.textContent = 'Selecciona el texto y cópialo manualmente';
+      }
+      setTimeout(() => { msg.textContent = ''; }, 2500);
+    });
+  </script>
+</body>
+</html>
